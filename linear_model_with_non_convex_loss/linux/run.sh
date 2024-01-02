@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #export one_test=1
-export KMax=1000
+export KMax=100
 
 #./experiment_no_vr_a9a.sh > experiment_no_vr_a9a.txt &
 #./experiment_no_vr_all_mushroom.sh > experiment_no_vr_all_mushroom.txt &

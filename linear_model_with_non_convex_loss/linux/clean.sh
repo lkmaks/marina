@@ -2,3 +2,4 @@
 rm *.bin
 rm *.png
 rm *.pdf
+rm *.txt

@@ -203,9 +203,13 @@ def fFullGradTest(data, lamb, x, test_margin):
 
 #====================================================================================================================
 test_name = str(os.getenv("test_name", "w8a"))
-KMax        = int(os.getenv("KMax", 40000))                            # maximum number of iterations
-KSamplesMax = int(os.getenv("KMax", 40000))                            # samples available in the final statistics
+# KMax        = int(os.getenv("KMax", 40000))                            # maximum number of iterations
+KMax        = int(os.getenv("KMax", 50))                            # maximum number of iterations
+# KSamplesMax = int(os.getenv("KMax", 40000))                            # samples available in the final statistics
+# KSamplesMax = int(os.getenv("KMax", KMax))                            # samples available in the final statistics
+KSamplesMax = int(os.getenv("KSamplesMax", KMax))                            # samples available in the final statistics
 mark_mult = KSamplesMax*1.0/KMax
+rootprint('DBG mark_mult: ', mark_mult)
  
 KSamples = [i for i in range(0, KMax, KMax//KSamplesMax)]
 
@@ -761,6 +765,7 @@ if mpi_rank != 0:
     comm.send(fi_grad_calcs_by_node, dest = 0,   tag = 2)
 
 if mpi_rank == 0:
+    rootprint('MPI ROOT PLOTTING')
     transfered_bits_by_nodes    = np.zeros((Workers + 1,KTests,KRounds,KMax))
     fi_grad_calcs_by_nodes      = np.zeros((Workers + 1,KTests,KRounds,KMax))
 
@@ -793,10 +798,13 @@ if mpi_rank == 0:
     aux_fig_p1       = plt.figure(figsize=(12, 8))
     aux_fig_p2       = plt.figure(figsize=(12, 8))
 
+    axs = dict()
+
     main_description = ""
     aux_description = ""
 
     for t in range(KTests):
+        rootprint(f'PLOTTING AT ROOT: test #{t}')
         descr = ktest_values[t]
 
         # Unpack configuration used to launch specific test
@@ -1005,8 +1013,18 @@ if mpi_rank == 0:
         linestyle = ["solid", "solid", "solid", "dashed","dashed","dashed"][t%6]
 
         #===================================================================================================================================
+
         fig = plt.figure(main_fig_p1.number)
-        ax = fig.add_subplot(1, 1, 1)
+
+        # get an existing ax for that fig, or create if it doesnt exist yet
+        if main_fig_p1.number not in axs:
+            axs[main_fig_p1.number] = fig.add_subplot(1, 1, 1)
+        ax = axs[main_fig_p1.number]
+
+        rootprint('DBG: main p1 plootting on ax')
+        rootprint(KSamples)
+        rootprint(fn_train_with_regul_loss)
+
         ax.semilogy(KSamples, fn_train_with_regul_loss, color=color, marker=marker, markevery=markevery, linestyle=linestyle, label=short_algo_name)
         if t == KTests - 1:
             ax.set_xlabel('Iteration', fontdict = {'fontsize':35})
@@ -1136,7 +1154,10 @@ if mpi_rank == 0:
     rootprint(f"INFO: Script '{__file__}' totally completed in: ", ((time.time() - t0)/60.0), " minutes")
     #plt.show()
 
+    rootprint('DBG: ', script_name, test_name, one_test)
     save_to = script_name + "_" + os.path.basename(test_name) + "_main"+ "_p1" + "_" + one_test + ".pdf"
+    rootprint('DBG: ', save_to)
+
     main_fig_p1.savefig(save_to, bbox_inches='tight')
     rootprint("Image is saved into: ", save_to) 
 

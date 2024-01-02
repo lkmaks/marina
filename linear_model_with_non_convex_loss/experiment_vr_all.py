@@ -799,6 +799,14 @@ if mpi_rank == 0:
     main_description = ""
     aux_description = ""
 
+    axs = dict()
+    def get_fig_ax(number):
+        fig = plt.figure(number)
+        # get an existing ax for that fig, or create if it doesnt exist yet
+        if number not in axs:
+            axs[number] = fig.add_subplot(1, 1, 1)
+        return fig, axs[number]
+
     for t in range(KTests):
         descr = ktest_values[t]
 
@@ -1008,8 +1016,7 @@ if mpi_rank == 0:
         linestyle = ["solid", "solid", "solid", "dashed","dashed","dashed"][t%6]
 
         #===================================================================================================================================
-        fig = plt.figure(main_fig_p1.number)
-        ax = fig.add_subplot(1, 1, 1)
+        fig, ax = get_fig_ax(main_fig_p1.number)
         ax.semilogy(KSamples, fn_train_with_regul_loss, color=color, marker=marker, markevery=markevery, linestyle=linestyle, label=short_algo_name)
         if t == KTests - 1:
             ax.set_xlabel('Iteration', fontdict = {'fontsize':35})
@@ -1021,8 +1028,7 @@ if mpi_rank == 0:
             plt.yticks(fontsize=30)
 
 
-        fig = plt.figure(main_fig_p2.number)
-        ax = fig.add_subplot(1, 1, 1)
+        fig, ax = get_fig_ax(main_fig_p2.number)
         ax.semilogy(KSamples, fn_train_with_regul_loss_grad_norm, color=color, marker=marker, markevery=markevery, linestyle=linestyle, label=short_algo_name)
         if t == KTests - 1:
             ax.set_xlabel('Iteration', fontdict = {'fontsize':35})
@@ -1034,8 +1040,7 @@ if mpi_rank == 0:
             plt.yticks(fontsize=30)
 
         #===================================================================================================================================
-        fig = plt.figure(transport_fig_p1.number)
-        ax = fig.add_subplot(1, 1, 1)
+        fig, ax = get_fig_ax(transport_fig_p1.number)
         if not i_use_gd:
             ax.semilogy(get_subset(transfered_bits_mean,KSamples), fn_train_with_regul_loss, color=color, marker=marker, markevery=markevery, linestyle=linestyle, label=short_algo_name)
         if t == KTests - 1:
@@ -1048,8 +1053,7 @@ if mpi_rank == 0:
             plt.yticks(fontsize=30)
 
 
-        fig = plt.figure(transport_fig_p2.number)
-        ax = fig.add_subplot(1, 1, 1)
+        fig, ax = get_fig_ax(transport_fig_p2.number)
         if not i_use_gd:
             ax.semilogy(get_subset(transfered_bits_mean,KSamples), fn_train_with_regul_loss_grad_norm, color=color, marker=marker, markevery=markevery, linestyle=linestyle, label=short_algo_name)
         if t == KTests - 1:
@@ -1063,8 +1067,7 @@ if mpi_rank == 0:
 
 
         #=====================================================================================================================================
-        fig = plt.figure(oracles_fig_p1.number)
-        ax = fig.add_subplot(1, 1, 1)
+        fig, ax = get_fig_ax(oracles_fig_p1.number)
         epochs = (fi_grad_calcs_sum * 1.0) / (Workers * SamplePerNodeTrain)
 
         ax.semilogy(get_subset(epochs,KSamples), fn_train_with_regul_loss, color=color, marker=marker, markevery=markevery, linestyle=linestyle, label=short_algo_name)
@@ -1078,8 +1081,7 @@ if mpi_rank == 0:
             plt.yticks(fontsize=30)
 
 
-        fig = plt.figure(oracles_fig_p2.number)
-        ax = fig.add_subplot(1, 1, 1)
+        fig, ax = get_fig_ax(oracles_fig_p2.number)
         ax.semilogy(get_subset(epochs,KSamples), fn_train_with_regul_loss_grad_norm, color=color, marker=marker, markevery=markevery, linestyle=linestyle, label=short_algo_name)
         if t == KTests - 1:
             main_description = main_description + algo_name
@@ -1096,8 +1098,7 @@ if mpi_rank == 0:
             main_description = main_description + algo_name + ", "
         #ax.semilogy([0, 1], [0.25, 0.25], color='black', lw=2, transform = plt.gcf().transFigure, clip_on = False)
         #=====================================================================================================================================
-        fig = plt.figure(aux_fig_p1.number)
-        ax = fig.add_subplot(1, 1, 1)
+        fig, ax = get_fig_ax(aux_fig_p1.number)
         #ax.fill_between(range(1,KMax), fi_grad_calcs_mx[1:] - 3*(fi_grad_calcs_dx[1:]**0.5), fi_grad_calcs_mx[1:] + 3*(fi_grad_calcs_dx[1:]**0.5), color='#539ecd')
         ax.plot(range(0,KMax-1), fi_grad_calcs_mx[:-1], color=color, marker=marker,  markevery=markevery, linestyle=linestyle, label=short_algo_name)
 
@@ -1113,8 +1114,7 @@ if mpi_rank == 0:
             plt.yticks(fontsize=30)
 
 
-        fig = plt.figure(aux_fig_p2.number)
-        ax = fig.add_subplot(1, 1, 1)
+        fig, ax = get_fig_ax(aux_fig_p2.number)
 
         #ax.fill_between(range(1,KMax), transfered_bits_mx[1:] - 3*(transfered_bits_dx[1:]**0.5), transfered_bits_mx[1:] + 3*(transfered_bits_dx[1:]**0.5), color='#539ecd')
         ax.plot(range(0,KMax-1), transfered_bits_mx[:-1], color=color, marker=marker,  markevery=markevery, linestyle=linestyle, label=short_algo_name)

@@ -39,12 +39,17 @@ function load_train_only
 }
 
 
-#load "https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/w8a"
-#load "https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/madelon"
-#load "https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a9a"
+load "https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/w8a"
+load "https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/madelon"
+load "https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a9a"
 
-#load_train_only "https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/gisette_scale.bz2"
-#load_train_only "https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/phishing"
-#load_train_only "https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/duke.bz2"
+load_train_only "https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/gisette_scale.bz2"
+load_train_only "https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/phishing"
+load_train_only "https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/duke.bz2"
 
 load "https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/mushrooms"
+
+cat duke | head -n 2 > duke.t
+cat gisette_scale | head -n 2 > gisette_scale.t
+cat phishing | head -n 2 > phishing.t
+cat mushrooms | head -n 2 > mushrooms.t

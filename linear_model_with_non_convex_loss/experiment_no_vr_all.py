@@ -1101,8 +1101,7 @@ if mpi_rank == 0:
             main_description = main_description + algo_name + ", "
         #ax.semilogy([0, 1], [0.25, 0.25], color='black', lw=2, transform = plt.gcf().transFigure, clip_on = False)
         #=====================================================================================================================================
-        fig = plt.figure(aux_fig_p1.number)
-        ax = fig.add_subplot(1, 1, 1)
+        fig, ax = get_fig_ax(aux_fig_p1.number)
         #ax.fill_between(range(1,KMax), fi_grad_calcs_mx[1:] - 3*(fi_grad_calcs_dx[1:]**0.5), fi_grad_calcs_mx[1:] + 3*(fi_grad_calcs_dx[1:]**0.5), color='#539ecd')
         ax.plot(range(0,KMax-1), fi_grad_calcs_mx[:-1], color=color, marker=marker,  markevery=markevery, linestyle=linestyle, label=short_algo_name)
 

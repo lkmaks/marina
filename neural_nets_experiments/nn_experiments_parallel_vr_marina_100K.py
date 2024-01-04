@@ -208,7 +208,7 @@ class WorkerThreadMarina(threading.Thread):
             model.train(True)
 
             for inputs, outputs in wcfg.train_loader:
-                dbgprint(self.wcfg, inputs.shape)
+                dbgprint(self.wcfg, inputs.shape, outputs.shape)
                 inputs, outputs = inputs.to(wcfg.device), outputs.to(wcfg.device)                   # move to device
                 logits = model(inputs)                                                              # forward-pass: Make a forward pass through the network
                 loss = one_div_trainset_len * F.cross_entropy(logits, outputs, reduction='sum')     # compute objective

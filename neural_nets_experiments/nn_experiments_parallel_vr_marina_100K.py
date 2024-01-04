@@ -208,6 +208,7 @@ class WorkerThreadMarina(threading.Thread):
             model.train(True)
 
             for inputs, outputs in wcfg.train_loader:
+                dbgprint(self.wcfg, inputs.shape)
                 inputs, outputs = inputs.to(wcfg.device), outputs.to(wcfg.device)                   # move to device
                 logits = model(inputs)                                                              # forward-pass: Make a forward pass through the network
                 loss = one_div_trainset_len * F.cross_entropy(logits, outputs, reduction='sum')     # compute objective
@@ -347,7 +348,7 @@ def main():
     gpu_device_0 = torch.device('cuda:0')   # Selected GPU (index 0)
     gpu_device_1 = torch.device('cuda:1')   # Selected GPU (index 1)
 
-    available_devices = [gpu_device_1]
+    available_devices = [gpu_device_0, gpu_device_1]
     master_device = available_devices[0]
     print("******************************************************************")
     global nn_config, workers_config
@@ -359,7 +360,7 @@ def main():
     nn_config.dataset = "CIFAR100"          # Dataset
     nn_config.model_name = "resnet18"      # NN architecture
     nn_config.load_workers = 0             # How many subprocesses to use for data loading. 0 means that the data will be loaded in the main process.
-    nn_config.batch_size = 128             # Technical batch size for training (due to GPU limitations)
+    nn_config.batch_size = 512             # Technical batch size for training (due to GPU limitations)
     nn_config.KMax = 3500                  # Maximum number of iterations
 
     # Number of workers

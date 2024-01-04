@@ -1,0 +1,130 @@
+<head>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const pdfGrid = document.getElementById('pdfGrid');
+        const pdfItems = document.querySelectorAll('.pdf-item');
+
+        pdfItems.forEach(item => {
+            const pdfPath = item.getAttribute('data-pdf');
+            displayPdf(pdfPath);
+        });
+
+        function displayPdf(pdfPath) {
+            const pdfContainer = document.createElement('div');
+            pdfContainer.className = 'pdf-container';
+            document.body.appendChild(pdfContainer);
+
+            // Use PDF.js to load and display the PDF
+            pdfjsLib.getDocument({ url: pdfPath }).promise.then(function (pdfDoc) {
+                for (let i = 1; i <= pdfDoc.numPages; i++) {
+                    pdfDoc.getPage(i).then(function (page) {
+                        const canvas = document.createElement('canvas');
+                        pdfContainer.appendChild(canvas);
+
+                        const context = canvas.getContext('2d');
+                        const viewport = page.getViewport({ scale: 1.5 });
+                        canvas.width = viewport.width;
+                        canvas.height = viewport.height;
+
+                        const renderContext = {
+                            canvasContext: context,
+                            viewport: viewport,
+                        };
+
+                        page.render(renderContext);
+                    });
+                }
+            });
+        }
+    });
+    </script>
+
+    <div id="pdfGrid">
+        <div class="pdf-item" data-pdf="data/experiment_no_vr_all_mushrooms_aux_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_mushrooms_aux_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_a9a_aux_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_w8a_aux_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_madelon_aux_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_phishing_transport_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_mushrooms_main_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_madelon_oracles_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_a9a_transport_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_mushrooms_oracles_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_phishing_aux_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_phishing_main_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_madelon_main_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_w8a_oracles_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_madelon_oracles_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_a9a_main_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_a9a_oracles_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_a9a_main_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_madelon_transport_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_w8a_oracles_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_mushrooms_aux_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_a9a_oracles_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_mushrooms_oracles_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_madelon_transport_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_a9a_aux_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_madelon_aux_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_phishing_transport_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_phishing_aux_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_a9a_aux_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_w8a_aux_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_w8a_transport_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_phishing_aux_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_madelon_oracles_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_a9a_transport_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_w8a_aux_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_mushrooms_oracles_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_mushrooms_transport_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_w8a_main_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_a9a_oracles_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_phishing_oracles_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_madelon_aux_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_mushrooms_transport_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_w8a_main_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_w8a_transport_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_w8a_main_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_madelon_main_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_mushrooms_main_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_mushrooms_transport_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_phishing_oracles_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_a9a_oracles_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_w8a_transport_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_madelon_aux_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_madelon_transport_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_phishing_aux_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_phishing_main_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_phishing_transport_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_mushrooms_main_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_phishing_oracles_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_a9a_main_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_phishing_oracles_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_mushrooms_oracles_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_w8a_main_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_w8a_aux_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_w8a_oracles_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_phishing_main_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_mushrooms_transport_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_a9a_transport_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_mushrooms_aux_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_mushrooms_main_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_phishing_transport_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_w8a_transport_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_a9a_transport_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_phishing_main_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_a9a_aux_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_madelon_transport_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_madelon_main_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_madelon_oracles_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_vr_all_a9a_main_p1_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_madelon_main_p2_.pdf"></div>
+<div class="pdf-item" data-pdf="data/experiment_no_vr_all_w8a_oracles_p1_.pdf"></div>
+
+    </div>
+</body>

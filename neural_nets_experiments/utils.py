@@ -134,7 +134,7 @@ def getModel(model_name, dataset, device):
 
     return final_model
 
-def getDatasets(dataset_name, batch_size, load_workers):
+def getDatasets(dataset_name, batch_size, load_workers, ram=True, ram_device='cuda:0'):
     root_dir  = Path(torch.hub.get_dir()) / f'datasets/{dataset_name}'
     ds = getattr(torchvision.datasets, dataset_name)
     transform = transforms.Compose([
@@ -157,6 +157,11 @@ def getDatasets(dataset_name, batch_size, load_workers):
                   download=True, 
                   transform = transform
                   )
+
+    if ram:
+        from RAMDataset import RAMDataset
+        train_set = RAMDataset(train_set, device=ram_device)
+        test_set = RAMDataset(test_set, device=ram_device)
 
     train_loader = DataLoader(
         train_set,                # dataset from which to load the data.
@@ -185,7 +190,7 @@ def getDatasets(dataset_name, batch_size, load_workers):
 
     return train_set, test_set, train_loader, test_loader, classes 
 
-def getSplitDatasets(dataset_name, batch_size, load_workers, train_workers):
+def getSplitDatasets(dataset_name, batch_size, load_workers, train_workers, ram=True, ram_device='cuda:0'):
     root_dir  = Path(torch.hub.get_dir()) / f'datasets/{dataset_name}'
     ds = getattr(torchvision.datasets, dataset_name)
     transform = transforms.Compose([
@@ -214,6 +219,11 @@ def getSplitDatasets(dataset_name, batch_size, load_workers, train_workers):
     train_sets = torch.utils.data.random_split(train_set, lengths)
     train_loaders = []
     test_loaders = []
+
+    from RAMDataset import RAMDataset
+    if ram:
+        train_sets = [RAMDataset(train_set, device=ram_device) for train_set in train_sets]
+        test_set = RAMDataset(test_set, device=ram_device)
 
     print(f"Total train set size for '{dataset_name}' is ", len(train_set))
 
@@ -324,3 +334,37 @@ def getAllParams(model):
     for p in model.parameters(): 
         params.append(p.data.detach().clone())
     return params
+
+
+def rand_perm_k(D, K, impl=0):
+    """
+    :param D:
+    :param K:
+    :return: randperm(D)[:K]
+    """
+    if impl == -1:
+        res = torch.randint(0, D, (K,))
+        have = set()
+        for i in range(res.shape[0]):
+            while res[i] in have:
+                res[i] = (res[i] + 1) % D
+            have.add(res[i])
+        return res
+    elif impl == 0:
+        S = torch.randperm(D)[:K]
+        return S
+    elif impl == 1:
+        S = torch.randint(0, D, (K,))
+        return S
+    elif impl == 2:
+        S = np.arange(D)
+        S = np.random.permutation(S)
+        res = torch.tensor(S[:K], dtype=torch.int32)
+        return res
+    elif impl == 3:
+        S = np.arange(D)
+        rand_inds = np.random.randint(0, D - np.arange(K), (K,))
+        for i in range(K):
+            j = i + rand_inds[i]
+            S[i], S[j] = S[j], S[i]
+        return S

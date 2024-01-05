@@ -197,6 +197,8 @@ class WorkerThreadMarina(threading.Thread):
 #                wcfg.output_of_cmd.append(p.data.detach().clone())
 #            wcfg.cmd_output_ready.release()
 
+        # dbgprint(self.wcfg, wcfg.cmd)
+
         if wcfg.cmd == "bcast_g_c1":
             wcfg.output_of_cmd = []
             k = 0
@@ -208,7 +210,6 @@ class WorkerThreadMarina(threading.Thread):
             model.train(True)
 
             for inputs, outputs in wcfg.train_loader:
-                dbgprint(self.wcfg, inputs.shape, outputs.shape)
                 inputs, outputs = inputs.to(wcfg.device), outputs.to(wcfg.device)                   # move to device
                 logits = model(inputs)                                                              # forward-pass: Make a forward pass through the network
                 loss = one_div_trainset_len * F.cross_entropy(logits, outputs, reduction='sum')     # compute objective
@@ -254,11 +255,17 @@ class WorkerThreadMarina(threading.Thread):
             model.train(True)
 
             #================================================================================================================================
-            for inputs, outputs in minibatch_loader:
+            from time import time
+            t0 = time()
+            for t, (inputs, outputs) in enumerate(minibatch_loader):
+                t1 = time()
                 inputs, outputs = inputs.to(wcfg.device), outputs.to(wcfg.device)                   # move to device
                 logits = model(inputs)                                                              # forward-pass: Make a forward pass through the network
                 loss = one_div_batch_prime_len * F.cross_entropy(logits, outputs, reduction='sum')     # compute objective
-                loss.backward()                                                                     # compute the gradient (backward-pass)
+                loss.backward()     # compute the gradient (backward-pass)
+                t5 = time()
+                # dbgprint(self.wcfg, f'For MB cat: {t1 - t0:.3f}; For rest: {t5 - t1:.3f}')
+
             g_batch_prev = []
             for p in model.parameters():
                 g_batch_prev.append(p.grad.data.detach().clone())
@@ -272,17 +279,29 @@ class WorkerThreadMarina(threading.Thread):
 
             # Evaluate SGD in the new point within b' batch 
             #================================================================================================================================
+            t0 = time()
             for inputs, outputs in minibatch_loader:
+                t1 = time()
                 inputs, outputs = inputs.to(wcfg.device), outputs.to(wcfg.device)                   # move to device
                 logits = model(inputs)                                                              # forward-pass: Make a forward pass through the network
                 loss = one_div_batch_prime_len * F.cross_entropy(logits, outputs, reduction='sum')     # compute objective
                 loss.backward()                                                                     # compute the gradient (backward-pass)
+                t5 = time()
+                # dbgprint(self.wcfg, f'For MB cat: {t1 - t0:.3f}; For rest: {t5 - t1:.3f}')
+
+            t0 = time()
             g_batch_next = []
             for p in model.parameters():
                 g_batch_next.append(p.grad.data.detach().clone())
                 p.grad = None
+            # dbgprint(self.wcfg, f'For Grad clone -> g_batch_next: {time() - t0:.3f}')
+
+            # t0 = time() # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
             delta = sub_params(g_batch_next, g_batch_prev)
+
+            t1 = time()
+            # dbgprint(self.wcfg, f'For sub params: {t1 - t0:.3f}')
 
             delta_offset = 0
             for t in range(len(delta)):
@@ -290,13 +309,21 @@ class WorkerThreadMarina(threading.Thread):
                 delta_flatten[(delta_offset):(delta_offset + offset)] = delta[t].flatten(0)
                 delta_offset += offset
 
+            # dbgprint(self.wcfg, f'Delta offsetting: {time() - t1:.3f}')
+            # t1 = time()
+
             delta_flatten = wcfg.compressor.compressVector(delta_flatten)
+            # dbgprint(self.wcfg, f'Compressing delta_flatten: {time() - t1:.3f}')
+            # t1 = time()
 
             delta_offset = 0
             for t in range(len(delta)):
                 offset = len(delta[t].flatten(0))
                 delta[t].flatten(0)[:] = delta_flatten[(delta_offset):(delta_offset + offset)]
                 delta_offset += offset
+
+            # dbgprint(self.wcfg, f'Delta offsetting p2: {time() - t1:.3f}')
+            # t1 = time()
 
             g_new = add_params(wcfg.input_for_cmd, delta)
             wcfg.output_of_cmd = g_new
@@ -308,13 +335,14 @@ class WorkerThreadMarina(threading.Thread):
 
             wcfg.cmd_output_ready.release()
 
+            # dbgprint(self.wcfg, f'For end of work: {time() - t1:.3f}')
+
         if wcfg.cmd == "full_grad":
             wcfg.output_of_cmd = []
             prev_train_mode = torch.is_grad_enabled()  
             model.train(True)
 
             for inputs, outputs in wcfg.train_loader:
-                #dbgprint(wcfg, ">>>>", len(inputs))
                 inputs, outputs = inputs.to(wcfg.device), outputs.to(wcfg.device)     # move to device
                 logits = model(inputs)                                                # forward-pass: Make a forward pass through the network
                 loss = one_div_trainset_len * F.cross_entropy(logits, outputs)        # compute objective
@@ -332,7 +360,9 @@ class WorkerThreadMarina(threading.Thread):
     dbgprint(wcfg, f"END")
 #======================================================================================================================================
 
-def main():
+def main(batch_size_for_worker=256, technical_batch_size=512,
+         gamma=1e-3, K=100_000, n_iters=3500,
+         device_num=5):
     global transfered_bits_by_node
     global fi_grad_calcs_by_node
     global train_loss
@@ -345,10 +375,9 @@ def main():
     utils.printTorchInfo()
     print("******************************************************************")
     cpu_device   = torch.device("cpu")      # CPU device
-    gpu_device_0 = torch.device('cuda:0')   # Selected GPU (index 0)
-    gpu_device_1 = torch.device('cuda:1')   # Selected GPU (index 1)
+    gpu_devices = [torch.device(f'cuda:{i}') for i in range(8)]
 
-    available_devices = [gpu_device_0, gpu_device_1]
+    available_devices = [gpu_devices[device_num]]
     master_device = available_devices[0]
     print("******************************************************************")
     global nn_config, workers_config
@@ -360,8 +389,8 @@ def main():
     nn_config.dataset = "CIFAR100"          # Dataset
     nn_config.model_name = "resnet18"      # NN architecture
     nn_config.load_workers = 0             # How many subprocesses to use for data loading. 0 means that the data will be loaded in the main process.
-    nn_config.batch_size = 512             # Technical batch size for training (due to GPU limitations)
-    nn_config.KMax = 3500                  # Maximum number of iterations
+    nn_config.batch_size = technical_batch_size             # Technical batch size for training (due to GPU limitations)
+    nn_config.KMax = n_iters                  # Maximum number of iterations
 
     # Number of workers
     kWorkers = 5                                # Number of workers
@@ -369,7 +398,8 @@ def main():
     #=======================================================================================================
     # Load data
     train_sets, train_set_full, test_set, train_loaders, test_loaders, classes = utils.getSplitDatasets(nn_config.dataset, nn_config.batch_size,
-                                                                                                        nn_config.load_workers, kWorkers)
+                                                                                                        nn_config.load_workers, kWorkers,
+                                                                                                        ram=True, ram_device=available_devices[0])
 
     print(f"Start training {nn_config.model_name}@{nn_config.dataset} for K={nn_config.KMax} iteration. VR-MARINA", available_devices)
     master_model = utils.getModel(nn_config.model_name, train_set_full, master_device)
@@ -399,9 +429,9 @@ def main():
 
     # TUNABLE PARAMS
     #=======================================================================================================
-    K = 100000
-    gamma = 1.0e-3
-    batch_size_for_worker = 256
+    # K = 100000
+    # gamma = 1.0e-3
+    # batch_size_for_worker = 256
     #=======================================================================================================
     nn_config.train_set_full_samples = len(train_set_full)
     nn_config.train_sets_samples = [len(s) for s in train_sets]
@@ -484,13 +514,17 @@ def main():
 
         rootprint(f"Start {nn_config.KMax} iterations of algorithm")
 
+        from time import time
+        prev_time = time()
         for iteration in range(0, nn_config.KMax):
             #if k % 2 == 0:
-            rootprint(f"Iteration {iteration}/{nn_config.KMax}. Completed by ", iteration/nn_config.KMax * 100.0, "%")
+            rootprint(f"Iteration {iteration}/{nn_config.KMax}. Completed by ", iteration/nn_config.KMax * 100.0, "%",
+                      f'elapsed {time() - prev_time} s')
+            prev_time = time()
             #====================================================================
             # Collect statistics
             #====================================================================
-            if iteration % 10 == 0:
+            if iteration % 50 == 0:
                 loss, grad_norm = getLossAndGradNorm(worker_cfgs[0].model, train_set_full, nn_config.batch_size, worker_cfgs[0].device)
                 train_loss[iteration] = loss
                 fn_train_loss_grad_norm[iteration] = grad_norm
@@ -542,9 +576,13 @@ def main():
                     worker_cfgs[i].input_for_cmd = gk_for_device[worker_cfgs[i].device]
                     worker_cfgs[i].input_cmd_ready.release()
 
+            time_before = time()
+            # rootprint(f'Time spent BEFORE waiting for workers: {time_before - prev_time}')
             # Obtain workers gi and average result
             for i in range(kWorkers): 
                 worker_cfgs[i].cmd_output_ready.acquire()
+            time_after = time()
+            rootprint(f'Time spent waiting for workers: {time_after - time_before}')
 
             gk_next = worker_cfgs[0].output_of_cmd
             worker_cfgs[0].output_of_cmd = None
@@ -553,7 +591,11 @@ def main():
                     gk_next[j] = gk_next[j] + worker_cfgs[i].output_of_cmd[j].to(master_device)
                 worker_cfgs[i].output_of_cmd = None
             gk_next = mult_param(1.0/kWorkers, gk_next)
+            print('Norm of change: ', norm_of_param(sub_params(gk, gk_next)))
             gk = gk_next
+
+            # rootprint(f'Time spent AFTER waiting for workers: {time() - time_after}')
+
 
     #===================================================================================
 
@@ -595,4 +637,8 @@ def main():
     #==================================================================================
 
 if __name__ == "__main__":
-    main()
+    main(K=1_000_000,
+         batch_size_for_worker=256 * 1,
+         technical_batch_size=256 * 16,
+         gamma=0.95,
+         device_num=3)

@@ -34,10 +34,10 @@ class DataSet:
         return variables()
 
     def __init__(self):
-        self.train_samples        = np.zeros( (0, 0), dtype = np.float)
-        self.test_samples         = np.zeros( (0, 0), dtype = np.float)
-        self.train_true_targets   = np.zeros( (0, 1), dtype = np.float)
-        self.test_true_targets    = np.zeros( (0, 1), dtype = np.float)
+        self.train_samples        = np.zeros( (0, 0), dtype = np.float32)
+        self.test_samples         = np.zeros( (0, 0), dtype = np.float32)
+        self.train_true_targets   = np.zeros( (0, 1), dtype = np.float32)
+        self.test_true_targets    = np.zeros( (0, 1), dtype = np.float32)
    
     def analyzeDataset(inputfile):
         f = 0

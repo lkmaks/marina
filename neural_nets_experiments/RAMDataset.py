@@ -10,9 +10,11 @@ def todevice(obj, device):
         return obj.to(device)
 
 class RAMDataset(Dataset):
-    def __init__(self, dataset, device='cpu'):
+    def __init__(self, dataset, device='cpu', debug=False):
         self.dataset = dataset
         self.len = len(self.dataset)
+        if debug:
+            self.len = 10
         self.elems = [todevice(dataset[i], device) for i in range(self.len)]
 
     def __len__(self):

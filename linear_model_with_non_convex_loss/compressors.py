@@ -174,13 +174,28 @@ class Compressor:
                 out = np.zeros_like(x)
                 self.last_need_to_send_advance = 0
         elif self.compressorType == CompressorType.RANDK_COMPRESSOR:
-            S = np.arange(self.D)
-            np.random.shuffle(S)
-            S = S[0:self.K]
+            # S = np.arange(self.D)
+            # np.random.shuffle(S)
+            # S = S[0:self.K]
+            #
+            # out = np.zeros_like(x)
+            # for i in S:
+            #     out[i] = self.D / self.K * x[i]
 
+            from time import time
+            from neural_nets_experiments.utils import rand_perm_k
+
+            t0 = time()
+
+            S = rand_perm_k(self.D, self.K, impl=1)
+
+            # maybe can take self.K / self.D just as well
+            p = 1 - (1 - 1 / self.D) ** self.K
             out = np.zeros_like(x)
-            for i in S:
-                out[i] = self.D / self.K * x[i]
+            out[S] = x[S] / p
+
+            print(f'Compress time: {time() - t0:.3f}')
+
             self.last_need_to_send_advance = self.K
         elif self.compressorType == CompressorType.NATURAL_COMPRESSOR_FP64 or self.compressorType == CompressorType.NATURAL_COMPRESSOR_FP32:
             out = np.zeros_like(x)

@@ -1,35 +1,52 @@
 #!/usr/bin/env python3.9
 # -*- coding: utf-8 -*-
-
+import utils
 import numpy as np
 import matplotlib.pyplot as plt
+
+plt.rcParams["lines.linewidth"] = 2
+plt.rcParams["font.size"] = 32
+
 import utils
-import sys, os
-from matplotlib.ticker import FormatStrFormatter
+
 
 class NNConfiguration: pass
 
-plt.rcParams["lines.markersize"] = 20
-plt.rcParams["lines.linewidth"] = 2
-plt.rcParams["font.size"] = 32
-#===================================================================================================
 def get_subset(ctr, indicies):
     return [ctr[ind] for ind in indicies]
+
+def descr_to_dict(descr):
+    lst = descr.strip().split('\n')
+    res = {line.split('=')[0]: line.split('=')[1].strip() for line in lst[1:]}
+    res['algo_name'] = lst[0]
+    return res
+
+def get_label(nc, descr):
+    d = descr_to_dict(descr)
+    algo_names = ['DIANA', 'VR-DIANA', 'MARINA', 'VR-MARINA']
+    algo_name = algo_names[int(d['algo_name'])]
+    N = utils.shortify(nc.KMax)
+    gamma = nc.gamma
+    D = nn_config.D
+    K = int(d['K']) if d['K'] != 'None' else D
+
+    return f'{algo_name}: N={N}, K={utils.shortify(K)}, w={D/K:.4f}, gamma={gamma}'
+
 #===================================================================================================
 
-main_fig   = plt.figure(figsize=(18, 18))
-grad_fig   = plt.figure(figsize=(18, 18))
-bits_fig_1 = plt.figure(figsize=(18, 18))
-bits_fig_2 = plt.figure(figsize=(18, 18))
-main_fig_epochs   = plt.figure(figsize=(18, 18))
-grad_fig_epochs  = plt.figure(figsize=(18, 18))
 
-#===================================================================================================
-files = sys.argv[1:]
-g = -1
+n_last = 9
+all_files = utils.get_all_log_files()
+files = utils.get_all_log_files(ids=list(range(len(all_files) - n_last, len(all_files))))
 
+fsize = (25, 10)
+main_fig   = plt.figure(figsize=fsize)
+grad_fig   = plt.figure(figsize=fsize)
+bits_fig_1 = plt.figure(figsize=fsize)
+bits_fig_2 = plt.figure(figsize=fsize)
+main_fig_epochs   = plt.figure(figsize=fsize)
+grad_fig_epochs  = plt.figure(figsize=fsize)
 
-# >>>>>>>>>>>>>>> added
 axs = dict()
 
 def get_fig_ax(number):
@@ -39,50 +56,42 @@ def get_fig_ax(number):
         axs[number] = fig.add_subplot(1, 1, 1)
     return fig, axs[number]
 
-# <<<<<<<<<<<<<  added
+colors = ["#dc143c", "#00008b", "#006400", "#dc143c", "#00008b", "#006400", "#c51b7d", "#000000", "#ff5e13",
+          "#dc143c", "#00008b", "#006400", "#dc143c", "#00008b", "#006400", "#c51b7d", "#000000", "#ff5e13"]
+# linestyle = ["solid", "solid", "solid", "dashed", "dashed", "dashed", "dotted", "dotted", "dotted"]
 
+for g, (dfile, lfile) in enumerate(files):
+    my = utils.deserialize(lfile)
+    descr = open(dfile, 'r').read()
 
-for fname in files:
-
-#===================================================================================================
-    print(fname)
-    my = utils.deserialize(fname)
     transfered_bits_by_node = my["transfered_bits_by_node"]
     fi_grad_calcs_by_node   = my["fi_grad_calcs_by_node"]
     train_loss              = my["train_loss"]
     test_loss               = my["test_loss"]
-    #train_acc               = my["train_acc"]
-    #test_acc                = my["test_acc"]
     fn_train_loss_grad_norm = my["fn_train_loss_grad_norm"]
     fn_test_loss_grad_norm  = my["fn_test_loss_grad_norm"]
     nn_config               = my["nn_config"]
     current_data_and_time   = my["current_data_and_time"]
     experiment_description  = my["experiment_description"]
-
-    if experiment_description == "Training resnet18@CIFAR100":
-        experiment_description = "Training ResNet-18 @ CIFAR100"
-
     compressor              = my["compressors"]
-
     nn_config               = my["nn_config"]
-    algo_name               = my["algo_name"]
-
-
     compressors_rand_K      = my["compressors_rand_K"]
-    algo_name               = algo_name + f" (K$\\approx${(compressors_rand_K/nn_config.D) if compressors_rand_K is not None else nn_config.D:.3f}d)"
+    label               = get_label(nn_config, descr)
 
-    freq = 10
 
+    color = colors[g]
+    linestyle = 'solid' if 'MARINA' in label else 'dotted'
+
+
+    freq = 1
     train_loss = [train_loss[i] for i in range(len(train_loss)) if i % freq == 0]
     test_loss  = [test_loss[i]  for i in range(len(test_loss))  if i % freq == 0]
-    #train_acc  = [train_acc[i]  for i in range(len(train_acc))  if i % freq == 0]
-    #test_acc   = [test_acc[i]   for i in range(len(test_acc))   if i % freq == 0]
     fn_train_loss_grad_norm  = [fn_train_loss_grad_norm[i]  for i in range(len(fn_train_loss_grad_norm))  if i % freq == 0]
     fn_test_loss_grad_norm   = [fn_test_loss_grad_norm[i]   for i in range(len(fn_test_loss_grad_norm))   if i % freq == 0]
 
     #===================================================================================================
     print("==========================================================")
-    print(f"Informaion about experiment results '{fname}'")
+    print(f"Informaion about experiment results '{lfile, dfile}'")
     print(f"  Content has been created at '{current_data_and_time}'")
     print(f"  Experiment description: {experiment_description}")
     print(f"  Dimension of the optimization proble: {nn_config.D}")
@@ -99,20 +108,19 @@ for fname in files:
 
     #=========================================================================================================================
     KMax = nn_config.KMax
-    mark_mult = 0.4
 
     fi_grad_calcs_sum      = np.sum(fi_grad_calcs_by_node, axis = 0)
-    transfered_bits_sum    = np.sum(transfered_bits_by_node, axis = 0)        
+    transfered_bits_sum    = np.sum(transfered_bits_by_node, axis = 0)
 
     for i in range(1, KMax):
         transfered_bits_sum[i] = transfered_bits_sum[i] + transfered_bits_sum[i-1]
 
-    transfered_bits_mean = transfered_bits_sum / nn_config.kWorkers       
+    transfered_bits_mean = transfered_bits_sum / nn_config.kWorkers
 
     for i in range(1, KMax):
         fi_grad_calcs_sum[i] = fi_grad_calcs_sum[i] + fi_grad_calcs_sum[i-1]
 
-    transfered_bits_mean_sampled = [transfered_bits_mean[i] for i in range(len(transfered_bits_mean)) if i % freq == 0] 
+    transfered_bits_mean_sampled = [transfered_bits_mean[i] for i in range(len(transfered_bits_mean)) if i % freq == 0]
 
     #=========================================================================================================================
 
@@ -123,27 +131,14 @@ for fname in files:
     epochs_sampled     =  [epochs[i] for i in range(len(epochs)) if i % freq == 0]
 
     #=========================================================================================================================
-    markevery = [ int(mark_mult*KMax/4.0/freq*4.0), int(mark_mult*KMax/4.0/freq*4.0), int(mark_mult*KMax/3.5/freq), int(mark_mult*KMax/3.0/freq), 
-                  int(mark_mult*KMax/5.0/freq), int(mark_mult*KMax/3.5/freq), int(mark_mult*KMax/2.5/freq), int(mark_mult*KMax/2.0/freq), int(mark_mult*KMax/3.0/freq)]
-
-    marker = ["^","d","*","^","d","*", "*", "x", "*"]
-    color = ["#dc143c", "#00008b", "#006400", "#dc143c", "#00008b", "#006400", "#c51b7d", "#000000", "#ff5e13"]
-    linestyle = ["solid", "solid", "solid", "dashed", "dashed", "dashed", "dotted","dotted", "dotted"]
-    #=========================================================================================================================
-    g = (g + 1)%len(color)
-    #=========================================================================================================================
 
     fig, ax = get_fig_ax(main_fig.number)
-    ax.semilogy(iterations_sampled, train_loss, color=color[g], 
-                                                marker=marker[g], 
-                                                markevery=markevery[g], 
-                                                linestyle=linestyle[g], label=algo_name)
+    ax.semilogy(iterations_sampled, train_loss, color=color,
+                                                linestyle=linestyle, label=label)
 
 
-    #ax.semilogy(iterations_sampled, test_loss, color=color[g], marker=marker[g], markevery=markevery[g], linestyle=linestyle[g], label=algo_name + " test")
     ax.set_xlabel('Communication Rounds', fontdict = {'fontsize':35})
     ax.set_ylabel('$f(x)$', fontdict = {'fontsize':35})
-    #ax.yaxis.set_major_formatter(FormatStrFormatter('%.2g'))
 
     ax.grid(True)
     ax.legend(loc='best', fontsize = 25)
@@ -154,12 +149,9 @@ for fname in files:
     #=========================================================================================================================
     fig, ax = get_fig_ax(grad_fig.number)
 
-    #g = (g + 2)%len(color)
-    ax.semilogy(iterations_sampled, fn_train_loss_grad_norm, color=color[g], marker=marker[g], markevery=markevery[g], linestyle=linestyle[g], label=algo_name)
-    #ax.semilogy(iterations_sampled, fn_test_loss_grad_norm,  color=color[g], marker=marker[g], markevery=markevery[g], linestyle=linestyle[g], label="test")
+    ax.semilogy(iterations_sampled, fn_train_loss_grad_norm, color=color, linestyle=linestyle, label=label)
     ax.set_xlabel('Communication Rounds', fontdict = {'fontsize':35})
     ax.set_ylabel('$||\\nabla f(x)||^2$', fontdict = {'fontsize':35})
-    #ax.yaxis.set_major_formatter(FormatStrFormatter('%.2g'))
 
     ax.grid(True)
     ax.legend(loc='best', fontsize = 25)
@@ -170,13 +162,9 @@ for fname in files:
     #=========================================================================================================================
     fig, ax = get_fig_ax(bits_fig_1.number)
 
-    #g = (g + 1)%len(color)
-    ax.semilogy(transfered_bits_mean_sampled, train_loss, color=color[g], marker=marker[g], markevery=markevery[g], linestyle=linestyle[g], label=algo_name)
-    #ax.semilogy(transfered_bits_mean_sampled, test_loss, color=color[5], marker=marker[5], markevery=markevery[5], linestyle=linestyle[5], label="test")
-
+    ax.semilogy(transfered_bits_mean_sampled, train_loss, color=color, linestyle=linestyle, label=label)
     ax.set_xlabel('#bits/n', fontdict = {'fontsize':35})
     ax.set_ylabel('f(x)', fontdict = {'fontsize':35})
-    #ax.yaxis.set_major_formatter(FormatStrFormatter('%.2g'))
 
     ax.grid(True)
     ax.legend(loc='best', fontsize = 25)
@@ -188,8 +176,7 @@ for fname in files:
     fig, ax = get_fig_ax(bits_fig_2.number)
 
     #g = (g + 1)%len(color)
-    ax.semilogy(transfered_bits_mean_sampled, fn_train_loss_grad_norm, color=color[g], marker=marker[g], markevery=markevery[g], linestyle=linestyle[g], label=algo_name)
-    #ax.semilogy(transfered_bits_mean_sampled, fn_test_loss_grad_norm, color=color[1], marker=marker[1], markevery=markevery[1], linestyle=linestyle[1], label="test")
+    ax.semilogy(transfered_bits_mean_sampled, fn_train_loss_grad_norm, color=color, linestyle=linestyle, label=label)
 
     ax.set_xlabel('#bits/n', fontdict = {'fontsize':35})
     ax.set_ylabel('$||\\nabla f(x)||^2$', fontdict = {'fontsize':35})
@@ -201,16 +188,12 @@ for fname in files:
     fig.tight_layout()
     #=========================================================================================================================
     fig, ax = get_fig_ax(main_fig_epochs.number)
-    ax.semilogy(epochs_sampled, train_loss, color=color[g], 
-                                                marker=marker[g], 
-                                                markevery=markevery[g], 
-                                                linestyle=linestyle[g], label=algo_name)
+    ax.semilogy(epochs_sampled, train_loss, color=color,
+                                                linestyle=linestyle, label=label)
 
 
-    #ax.semilogy(iterations_sampled, test_loss, color=color[g], marker=marker[g], markevery=markevery[g], linestyle=linestyle[g], label=algo_name + " test")
     ax.set_xlabel('Epochs', fontdict = {'fontsize':35})
     ax.set_ylabel('$f(x)$', fontdict = {'fontsize':35})
-    #ax.yaxis.set_major_formatter(FormatStrFormatter('%.2g'))
 
     ax.grid(True)
     ax.legend(loc='best', fontsize = 25)
@@ -218,15 +201,14 @@ for fname in files:
     plt.xticks(fontsize=27)
     plt.yticks(fontsize=30)
     fig.tight_layout()
+    
     #=========================================================================================================================
+    
     fig, ax = get_fig_ax(grad_fig_epochs.number)
 
-    #g = (g + 2)%len(color)
-    ax.semilogy(epochs_sampled, fn_train_loss_grad_norm, color=color[g], marker=marker[g], markevery=markevery[g], linestyle=linestyle[g], label=algo_name)
-    #ax.semilogy(iterations_sampled, fn_test_loss_grad_norm,  color=color[g], marker=marker[g], markevery=markevery[g], linestyle=linestyle[g], label="test")
+    ax.semilogy(epochs_sampled, fn_train_loss_grad_norm, color=color, linestyle=linestyle, label=label)
     ax.set_xlabel('Epochs', fontdict = {'fontsize':35})
     ax.set_ylabel('$||\\nabla f(x)||^2$', fontdict = {'fontsize':35})
-    #ax.yaxis.set_major_formatter(FormatStrFormatter('%.2g'))
 
     ax.grid(True)
     ax.legend(loc='best', fontsize = 25)
@@ -234,31 +216,6 @@ for fname in files:
     plt.xticks(fontsize=27)
     plt.yticks(fontsize=30)
     fig.tight_layout()
-    #=========================================================================================================================
-
-    #fig = plt.figure(acc_fig.number)
-    #ax = fig.add_subplot(1, 1, 1)
-
-    #g = (g + 1)%len(color)
-    #ax.semilogy(epochs_sampled, train_acc, color=color[g], marker=marker[g], markevery=markevery[g], linestyle=linestyle[g], label=algo_name + " train")
-
-    #g = (g + 1)%len(color)
-    #ax.semilogy(epochs_sampled, test_acc, color=color[g], marker=marker[g], markevery=markevery[g], linestyle=linestyle[g], label=algo_name + " test")
-
-    #ax.set_xlabel('Epochs', fontdict = {'fontsize':35})
-    #ax.set_ylabel('Accuracy', fontdict = {'fontsize':35})
-    #ax.yaxis.set_major_formatter(FormatStrFormatter('%.2g'))
-
-    #ax.grid(True)
-    #ax.legend(loc='best', fontsize = 25)
-    #plt.title(f'{experiment_description}', fontdict = {'fontsize':35})
-    #plt.xticks(fontsize=27)
-    #plt.yticks(fontsize=30)
-    #fig.tight_layout()
-    #=========================================================================================================================
-
-if False:
-    plt.show()
 
 main_fig.tight_layout()
 grad_fig.tight_layout()

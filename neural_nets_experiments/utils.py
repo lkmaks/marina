@@ -101,7 +101,7 @@ def printLayersInfo(model,model_name):
 
 def getModel(model_name, dataset, device):
     model_class = getattr(torchvision.models, model_name)
-    model = model_class(pretrained=True).to(device)
+    model = model_class(weights=torchvision.models.ResNet18_Weights.DEFAULT).to(device)
 
     model.train(False)
     max_class = 0
@@ -190,7 +190,7 @@ def getDatasets(dataset_name, batch_size, load_workers, ram=True, ram_device='cu
 
     return train_set, test_set, train_loader, test_loader, classes 
 
-def getSplitDatasets(dataset_name, batch_size, load_workers, train_workers, ram=True, ram_device='cuda:0'):
+def getSplitDatasets(dataset_name, batch_size, load_workers, train_workers, ram=True, ram_device='cuda:0', debug=False):
     root_dir  = Path(torch.hub.get_dir()) / f'datasets/{dataset_name}'
     ds = getattr(torchvision.datasets, dataset_name)
     transform = transforms.Compose([
@@ -222,8 +222,8 @@ def getSplitDatasets(dataset_name, batch_size, load_workers, train_workers, ram=
 
     from RAMDataset import RAMDataset
     if ram:
-        train_sets = [RAMDataset(train_set, device=ram_device) for train_set in train_sets]
-        test_set = RAMDataset(test_set, device=ram_device)
+        train_sets = [RAMDataset(train_set, device=ram_device, debug=debug) for train_set in train_sets]
+        test_set = RAMDataset(test_set, device=ram_device, debug=debug)
 
     print(f"Total train set size for '{dataset_name}' is ", len(train_set))
 
@@ -368,3 +368,60 @@ def rand_perm_k(D, K, impl=0):
             j = i + rand_inds[i]
             S[i], S[j] = S[j], S[i]
         return S
+
+
+
+import glob
+import os
+
+REMOTE_ROOT = '/tmp/pycharm_project_703'
+
+def create_log_file(description, savedir='neural_nets_experiments/out'):
+    abs_savedir = os.path.join(REMOTE_ROOT, savedir)
+
+    try:
+        os.mkdir(abs_savedir)
+    except Exception as e:
+        pass
+
+    existing_dirs = glob.glob(abs_savedir + '/*')
+    new_dir = os.path.join(abs_savedir, str(len(existing_dirs)))
+    os.mkdir(new_dir)
+
+    descr_filename = os.path.join(new_dir, 'description.txt')
+    with open(descr_filename, 'w') as dfile:
+        dfile.write(description)
+
+    log_filename = os.path.join(new_dir, 'log.bin')
+    with open(log_filename, 'w') as lfile:
+        lfile.write('')
+
+    return log_filename
+
+
+def get_all_log_files(ids=None, savedir='neural_nets_experiments/out'):
+    abs_savedir = os.path.join(REMOTE_ROOT, savedir)
+
+    results = []
+    for logdir in glob.glob(abs_savedir + '/*'):
+        dfile = os.path.join(logdir, 'description.txt')
+        lfile = os.path.join(logdir, 'log.bin')
+        if ids is None or int(logdir.split('/')[-1]) in ids:
+            results.append((dfile, lfile))
+
+    return results
+
+
+def shortify(n):
+    s = str(n)
+    i = len(s) - 1
+    while i >= 0 and s[i] == '0':
+        i -= 1
+
+    if i == -1:
+        return '0'
+    elif i == len(s) - 1:
+        return s
+    else:
+        return s[0] + ',' + s[1:i + 1] + '*10^' + str(len(s) - 1)
+        # return s[:i + 1] + '*10^' + str(len(s) - 1 - i)

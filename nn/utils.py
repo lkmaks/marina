@@ -376,7 +376,7 @@ import os
 
 REMOTE_ROOT = '/home/lkmaks/marina/'
 
-def create_log_file(description, savedir='neural_nets_experiments/out'):
+def create_log_file(description, savedir='nn/out'):
     abs_savedir = os.path.join(REMOTE_ROOT, savedir)
 
     try:
@@ -399,7 +399,7 @@ def create_log_file(description, savedir='neural_nets_experiments/out'):
     return log_filename
 
 
-def get_all_log_files(ids=None, savedir='neural_nets_experiments/out'):
+def get_all_log_files(ids=None, savedir='nn/out'):
     abs_savedir = os.path.join(REMOTE_ROOT, savedir)
 
     results = []

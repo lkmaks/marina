@@ -18,7 +18,7 @@ conda install jupyter matplotlib numpy psutil -y
 
 ## Description
 
-Please use sources from the following folder for experiments with Neural Nets: [neural_nets_experiments](neural_nets_experiments)
+Please use sources from the following folder for experiments with Neural Nets: [neural_nets_experiments](nn)
 Each script corresponds to a specific algorithm with a specific compressor. Each script produces two main outputs:
 - Output in a standard output text stream with various log information
 - Serialized binary files with need statistics to display results.
@@ -26,11 +26,11 @@ Each script corresponds to a specific algorithm with a specific compressor. Each
 Example of the command line to launch one of the scripts:
 
 ```bash
-cd ./neural_nets_experiments 
+cd ./nn 
 nohup python nn_experiments_parallel_vr_diana_no_compr.py > nn_experiments_parallel_vr_diana_no_compr.txt &
 ```
 
-After obtaining binary files to generate plots, please use [neural_nets_experiments/show.py](neural_nets_experiments/old/show.py) script. It should be launched via passing all binary files in a command line to visualize the experiment results and gather information from the experimental results. Example of the command line:
+After obtaining binary files to generate plots, please use [neural_nets_experiments/show.py](nn/old/show.py) script. It should be launched via passing all binary files in a command line to visualize the experiment results and gather information from the experimental results. Example of the command line:
 ```bash
 python show.py experiment_vr_marina_K_100000.bin experiment_vr_marina_K_500000.bin > info.txt
 ```
@@ -42,11 +42,11 @@ Please install for your Python shell the following libraries via your package ma
 
 ## Description
 
-In that experiment, we carried non-convex linear regression with MPI4PY. Launch scripts are in [linear_model_with_non_convex_loss/linux](linear_model_with_non_convex_loss/linux). The script produces two main outputs:
+In that experiment, we carried non-convex linear regression with MPI4PY. Launch scripts are in [linear_model_with_non_convex_loss/linux](lin/linux). The script produces two main outputs:
 - Output in a standard output text stream with various log information
 - Serialized binary files with need statistics to display results.
 
-After obtaining binary files to generate plots, please use [linear_model_with_non_convex_loss/show.py](linear_model_with_non_convex_loss/show.py) script. It should be launched via passing all "bin" files in a command line. Example of the command line:
+After obtaining binary files to generate plots, please use [linear_model_with_non_convex_loss/show.py](lin/show.py) script. It should be launched via passing all "bin" files in a command line. Example of the command line:
 ```bash
 python show.py experiment_vr_marina_K_100000.bin experiment_vr_marina_K_500000.bin > info.txt
 ```
@@ -60,4 +60,4 @@ import utils
 import numpy as np
 d = utils.deserialize("experiment.bin")
 ```
-For a more detailed understanding of the structure of serialized experiments, you can look into the [linear_model_with_non_convex_loss/show.py](linear_model_with_non_convex_loss/show.py) script.
+For a more detailed understanding of the structure of serialized experiments, you can look into the [linear_model_with_non_convex_loss/show.py](lin/show.py) script.

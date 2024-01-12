@@ -417,15 +417,20 @@ def get_all_log_files(ids=None, savedir='neural_nets_experiments/out'):
 
 
 def shortify(n):
-    s = str(n)
-    i = len(s) - 1
-    while i >= 0 and s[i] == '0':
-        i -= 1
+    if isinstance(n, int):
+        s = str(n)
+        i = len(s) - 1
+        while i >= 0 and s[i] == '0':
+            i -= 1
 
-    if i == -1:
-        return '0'
-    elif i == len(s) - 1:
-        return s
-    else:
-        return s[0] + ',' + s[1:i + 1] + '*10^' + str(len(s) - 1)
-        # return s[:i + 1] + '*10^' + str(len(s) - 1 - i)
+        if i == -1:
+            return '0'
+        elif i == len(s) - 1:
+            return s
+        else:
+            dot = '.'
+            if i == 0:
+                dot = ''
+            return s[0] + dot + s[1:i + 1] + '*10^' + str(len(s) - 1)
+    # elif isinstance(n, float):
+    #     m1, m2 = srt(n).split('.')

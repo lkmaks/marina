@@ -29,8 +29,10 @@ def get_label(nc, descr):
     gamma = nc.gamma
     D = nn_config.D
     K = int(d['K']) if d['K'] != 'None' else D
+    p = nn_config.p
 
-    return f'{algo_name}: N={N}, K={utils.shortify(K)}, w={D/K:.4f}, gamma={gamma}'
+    return (f'{algo_name}: N={N}, K={utils.shortify(K)}, K={K/D:.4f}D, gamma={gamma},'
+            f'p={p:.4f}')
 
 #===================================================================================================
 
@@ -39,13 +41,15 @@ n_last = 9
 all_files = utils.get_all_log_files()
 files = utils.get_all_log_files(ids=list(range(len(all_files) - n_last, len(all_files))))
 
-fsize = (25, 10)
+fsize = (45, 20)
 main_fig   = plt.figure(figsize=fsize)
 grad_fig   = plt.figure(figsize=fsize)
 bits_fig_1 = plt.figure(figsize=fsize)
 bits_fig_2 = plt.figure(figsize=fsize)
 main_fig_epochs   = plt.figure(figsize=fsize)
 grad_fig_epochs  = plt.figure(figsize=fsize)
+
+loc = 'upper right'
 
 axs = dict()
 
@@ -141,11 +145,11 @@ for g, (dfile, lfile) in enumerate(files):
     ax.set_ylabel('$f(x)$', fontdict = {'fontsize':35})
 
     ax.grid(True)
-    ax.legend(loc='best', fontsize = 25)
+    ax.legend(loc=loc, fontsize = 25)
     plt.title(f'{experiment_description}', fontdict = {'fontsize':35})
     plt.xticks(fontsize=27)
     plt.yticks(fontsize=30)
-    fig.tight_layout()
+    # fig.tight_layout()
     #=========================================================================================================================
     fig, ax = get_fig_ax(grad_fig.number)
 
@@ -154,11 +158,11 @@ for g, (dfile, lfile) in enumerate(files):
     ax.set_ylabel('$||\\nabla f(x)||^2$', fontdict = {'fontsize':35})
 
     ax.grid(True)
-    ax.legend(loc='best', fontsize = 25)
+    ax.legend(loc=loc, fontsize = 25)
     plt.title(f'{experiment_description}', fontdict = {'fontsize':35})
     plt.xticks(fontsize=27)
     plt.yticks(fontsize=30)
-    fig.tight_layout()
+    # fig.tight_layout()
     #=========================================================================================================================
     fig, ax = get_fig_ax(bits_fig_1.number)
 
@@ -167,11 +171,11 @@ for g, (dfile, lfile) in enumerate(files):
     ax.set_ylabel('f(x)', fontdict = {'fontsize':35})
 
     ax.grid(True)
-    ax.legend(loc='best', fontsize = 25)
+    ax.legend(loc=loc, fontsize = 25)
     plt.title(f'{experiment_description}', fontdict = {'fontsize':35})
     plt.xticks(fontsize=27)
     plt.yticks(fontsize=30)
-    fig.tight_layout()
+    # fig.tight_layout()
     #=========================================================================================================================
     fig, ax = get_fig_ax(bits_fig_2.number)
 
@@ -181,11 +185,11 @@ for g, (dfile, lfile) in enumerate(files):
     ax.set_xlabel('#bits/n', fontdict = {'fontsize':35})
     ax.set_ylabel('$||\\nabla f(x)||^2$', fontdict = {'fontsize':35})
     ax.grid(True)
-    ax.legend(loc='best', fontsize = 25)
+    ax.legend(loc=loc, fontsize = 25)
     plt.title(f'{experiment_description}', fontdict = {'fontsize':35})
     plt.xticks(fontsize=27)
     plt.yticks(fontsize=30)
-    fig.tight_layout()
+    # fig.tight_layout()
     #=========================================================================================================================
     fig, ax = get_fig_ax(main_fig_epochs.number)
     ax.semilogy(epochs_sampled, train_loss, color=color,
@@ -196,11 +200,11 @@ for g, (dfile, lfile) in enumerate(files):
     ax.set_ylabel('$f(x)$', fontdict = {'fontsize':35})
 
     ax.grid(True)
-    ax.legend(loc='best', fontsize = 25)
+    ax.legend(loc=loc, fontsize = 25)
     plt.title(f'{experiment_description}', fontdict = {'fontsize':35})
     plt.xticks(fontsize=27)
     plt.yticks(fontsize=30)
-    fig.tight_layout()
+    # fig.tight_layout()
     
     #=========================================================================================================================
     
@@ -211,18 +215,18 @@ for g, (dfile, lfile) in enumerate(files):
     ax.set_ylabel('$||\\nabla f(x)||^2$', fontdict = {'fontsize':35})
 
     ax.grid(True)
-    ax.legend(loc='best', fontsize = 25)
+    ax.legend(loc=loc, fontsize = 25)
     plt.title(f'{experiment_description}', fontdict = {'fontsize':35})
     plt.xticks(fontsize=27)
     plt.yticks(fontsize=30)
-    fig.tight_layout()
+    # # fig.tight_layout()
 
-main_fig.tight_layout()
-grad_fig.tight_layout()
-bits_fig_1.tight_layout()
-bits_fig_2.tight_layout()
-main_fig_epochs.tight_layout()
-grad_fig_epochs.tight_layout()
+# main_# fig.tight_layout()
+# grad_# fig.tight_layout()
+# bits_fig_1.tight_layout()
+# bits_fig_2.tight_layout()
+# main_fig_epochs.tight_layout()
+# grad_fig_epochs.tight_layout()
 
 save_to = "1_main_fig.pdf"
 main_fig.savefig(save_to, bbox_inches='tight')

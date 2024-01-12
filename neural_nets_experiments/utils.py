@@ -374,7 +374,7 @@ def rand_perm_k(D, K, impl=0):
 import glob
 import os
 
-REMOTE_ROOT = '/tmp/pycharm_project_703'
+REMOTE_ROOT = '/home/lkmaks/marina/'
 
 def create_log_file(description, savedir='neural_nets_experiments/out'):
     abs_savedir = os.path.join(REMOTE_ROOT, savedir)
@@ -406,8 +406,12 @@ def get_all_log_files(ids=None, savedir='neural_nets_experiments/out'):
     for logdir in glob.glob(abs_savedir + '/*'):
         dfile = os.path.join(logdir, 'description.txt')
         lfile = os.path.join(logdir, 'log.bin')
-        if ids is None or int(logdir.split('/')[-1]) in ids:
-            results.append((dfile, lfile))
+        ind = int(logdir.split('/')[-1])
+        if ids is None or ind in ids:
+            results.append((ind, dfile, lfile))
+
+    results.sort(key=(lambda t: t[0]))
+    results = [(e[1], e[2]) for e in results]
 
     return results
 

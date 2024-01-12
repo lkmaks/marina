@@ -30,7 +30,7 @@ cd ./neural_nets_experiments
 nohup python nn_experiments_parallel_vr_diana_no_compr.py > nn_experiments_parallel_vr_diana_no_compr.txt &
 ```
 
-After obtaining binary files to generate plots, please use [neural_nets_experiments/show.py](neural_nets_experiments/show.py) script. It should be launched via passing all binary files in a command line to visualize the experiment results and gather information from the experimental results. Example of the command line:
+After obtaining binary files to generate plots, please use [neural_nets_experiments/show.py](neural_nets_experiments/old/show.py) script. It should be launched via passing all binary files in a command line to visualize the experiment results and gather information from the experimental results. Example of the command line:
 ```bash
 python show.py experiment_vr_marina_K_100000.bin experiment_vr_marina_K_500000.bin > info.txt
 ```

@@ -183,11 +183,10 @@ class Compressor:
             #     out[i] = self.D / self.K * x[i]
 
             from time import time
-            from neural_nets_experiments.utils import rand_perm_k
 
             t0 = time()
 
-            S = rand_perm_k(self.D, self.K, impl=1)
+            S = np.random.randint(0, self.D, (self.K,))
 
             # maybe can take self.K / self.D just as well
             p = 1 - (1 - 1 / self.D) ** self.K

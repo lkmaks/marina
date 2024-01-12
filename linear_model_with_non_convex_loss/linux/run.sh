@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #export one_test=1
-export KMax=50
+export KMax=100
 
 ./experiment_no_vr_a9a.sh > experiment_no_vr_a9a.txt &
 wait

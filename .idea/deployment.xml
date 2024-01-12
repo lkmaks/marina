@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" autoUpload="Always" serverName="lkmaks@proxy2.cod.phystech.edu:10096 password (2)" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
+    <option name="confirmBeforeUploading" value="false" />
+    <serverData>
+      <paths name="lkmaks@proxy2.cod.phystech.edu:10096 password">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/pycharm_project_703" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="lkmaks@proxy2.cod.phystech.edu:10096 password (2)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/lkmaks/marina" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
+  </component>
+</project>

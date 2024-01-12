@@ -1002,10 +1002,10 @@ def main(algo_name=AlgoNames.VR_MARINA,
     #==================================================================================
 
 if __name__ == "__main__":
-    DEBUG = True
-    device_num = 1
+    DEBUG = False
+    device_num = 0
 
-    n_iter = 10
+    n_iter = 1200
     log_every = 10
 
     alg_names = []

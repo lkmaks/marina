@@ -1,4 +1,6 @@
 import torch
+import pickle
+
 
 def add_params(x, y):
     z = []
@@ -29,3 +31,8 @@ def norm_of_param(x):
     for i in range(len(x)):
         z += torch.norm(x[i].flatten(0))
     return z
+
+
+
+def copy_module(model):
+    return pickle.loads(pickle.dumps(model))

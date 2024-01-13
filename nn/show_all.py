@@ -37,7 +37,7 @@ def get_label(nc, descr):
 #===================================================================================================
 
 
-n_last = 1
+n_last = 9
 all_files = utils.get_all_log_files()
 files = utils.get_all_log_files(ids=list(range(len(all_files) - n_last, len(all_files))))
 

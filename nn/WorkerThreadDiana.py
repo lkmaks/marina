@@ -16,14 +16,13 @@ class WorkerThreadDiana(threading.Thread):
         threading.Thread.__init__(self)
         self.wcfg = wcfg
         self.ncfg = ncfg
+        self.stats = stats
 
         self.model = utils.getModel(ncfg.model_name, wcfg.train_set_full, wcfg.device)
         self.model = self.model.to(wcfg.device)  # move model to device
         wcfg.model = self.model
-
         utils.setupAllParamsRandomly(self.model)
 
-        self.stats = stats
         self.print_lock = print_lock
 
     def run(self):
@@ -84,7 +83,7 @@ class WorkerThreadDiana(threading.Thread):
                 # ================================================================================================================================
                 minibatch_loader = DataLoader(
                     subset,  # dataset from which to load the data.
-                    batch_size=ncfg.batch_size,  # How many samples per batch to load (default: 1).
+                    batch_size=ncfg.technical_batch_size,  # How many samples per batch to load (default: 1).
                     shuffle=False,  # Set to True to have the data reshuffled at every epoch (default: False)
                     drop_last=False,
                     # Set to True to drop the last incomplete batch, if the dataset size is not divisible by the batch size

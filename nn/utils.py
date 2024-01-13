@@ -114,10 +114,10 @@ def getModel(model_name, dataset, device):
         min_class = min(target, min_class)
 
     number_of_classes_in_dataset = max_class - min_class + 1 
-    print("number_of_classes_in_dataset: ", number_of_classes_in_dataset)
+    # print("number_of_classes_in_dataset: ", number_of_classes_in_dataset)
 
     out_one_hot_encoding = model(dataset[0][0].unsqueeze(0).to(device)).numel()
-    print("number of output class in original model: ", out_one_hot_encoding)
+    # print("number of output class in original model: ", out_one_hot_encoding)
 
     final_model = torch.nn.Sequential(model,
                                       torch.nn.ReLU(),
@@ -127,7 +127,7 @@ def getModel(model_name, dataset, device):
     #final_model = torch.nn.Sequential(torch.nn.Flatten(1), 
     #                                  torch.nn.Linear(32*32*3, number_of_classes_in_dataset, bias = False)).to(device)
 
-    final_model = model
+    # final_model = model
 
     #out_one_hot_encoding = final_model(dataset[0][0].unsqueeze(0).to(device)).numel()
     #print("number of output class in a final model: ", out_one_hot_encoding)

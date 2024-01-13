@@ -23,7 +23,7 @@ from debug_utils import rootprint, dbgprint
 
 # Worker thread implementations for each algorithm
 from WorkerThreadDiana import WorkerThreadDiana
-# from WorkerThreadMarina import WorkerThreadMarina
+from WorkerThreadMarina import WorkerThreadMarina
 
 
 #====================================================================================
@@ -35,6 +35,7 @@ class AlgoNames:
     VR_DIANA = 1
     MARINA = 2
     VR_MARINA = 3
+    KATYUSHA = 4
 
 #====================================================================================
 
@@ -145,7 +146,7 @@ def main(algo_name=AlgoNames.VR_MARINA,
     nn_config.dataset = "CIFAR100"          # Dataset
     nn_config.model_name = "resnet18"      # NN architecture
     nn_config.load_workers = 0             # KEEP THIS 0. How many subprocesses to use for data loading. 0 means that the data will be loaded in the main process.
-    nn_config.batch_size = technical_batch_size             # Technical batch size for training (due to GPU limitations)
+    nn_config.technical_batch_size = technical_batch_size             # Technical batch size for training (due to GPU limitations)
     nn_config.KMax = n_iters                  # Maximum number of iterations
     nn_config.K = K
     nn_config.algo_name = algo_name
@@ -155,7 +156,7 @@ def main(algo_name=AlgoNames.VR_MARINA,
     #=======================================================================================================
     # Load data
     t1 = time()
-    train_sets, train_set_full, test_set, train_loaders, test_loaders, classes = utils.getSplitDatasets(nn_config.dataset, nn_config.batch_size,
+    train_sets, train_set_full, test_set, train_loaders, test_loaders, classes = utils.getSplitDatasets(nn_config.dataset, nn_config.technical_batch_size,
                                                                                                         nn_config.load_workers, kWorkers,
                                                                                                         ram=True, ram_device=available_devices[0],
                                                                                                         debug=debug)
@@ -259,10 +260,8 @@ def main(algo_name=AlgoNames.VR_MARINA,
 
         if algo_name == AlgoNames.DIANA or algo_name == AlgoNames.VR_DIANA:
             worker_tasks.append(WorkerThreadDiana(worker_cfgs[-1], nn_config, stats, print_lock=print_lock))
-        else:
-            pass
-            # worker_tasks.append(WorkerThreadMarina(worker_cfgs[-1], nn_config))
-
+        elif algo_name == AlgoNames.MARINA or algo_name == AlgoNames.VR_MARINA:
+            worker_tasks.append(WorkerThreadMarina(worker_cfgs[-1], nn_config, stats, print_lock=print_lock))
 
     # Start worker threads
     for i in range(kWorkers):
@@ -283,16 +282,16 @@ def main(algo_name=AlgoNames.VR_MARINA,
             if iteration % log_every == 0:
                 utils.setupAllParams(master_model, xk)
 
-                loss, grad_norm = getLossAndGradNorm(master_model, train_set_full, nn_config.batch_size, master_device)
+                loss, grad_norm = getLossAndGradNorm(master_model, train_set_full, nn_config.technical_batch_size, master_device)
                 train_loss[iteration] = loss
                 fn_train_loss_grad_norm[iteration] = grad_norm
 
-                loss, grad_norm = getLossAndGradNorm(master_model, test_set, nn_config.batch_size, master_device)
+                loss, grad_norm = getLossAndGradNorm(master_model, test_set, nn_config.technical_batch_size, master_device)
                 test_loss[iteration] = loss
                 fn_test_loss_grad_norm[iteration] = grad_norm
 
-                train_acc[iteration] = getAccuracy(master_model, train_set_full, nn_config.batch_size, master_device)
-                test_acc[iteration]  = getAccuracy(master_model, test_set, nn_config.batch_size, master_device)
+                train_acc[iteration] = getAccuracy(master_model, train_set_full, nn_config.technical_batch_size, master_device)
+                test_acc[iteration]  = getAccuracy(master_model, test_set, nn_config.technical_batch_size, master_device)
                 print(f"  train accuracy: {train_acc[iteration]}, test accuracy: {test_acc[iteration]}, train loss: {train_loss[iteration]}, test loss: {test_loss[iteration]}")
                 print(f"  grad norm train: {fn_train_loss_grad_norm[iteration]}, test: {fn_test_loss_grad_norm[iteration]}")
                 print(f"  used step-size: {nn_config.gamma}")
@@ -328,7 +327,7 @@ def main(algo_name=AlgoNames.VR_MARINA,
 
             t0 = time()
             if uk == 1:
-                # Broadcast xk and obtain gi as reponse from workers
+                # Broadcast xk and obtain gi as response from workers
                 for i in range(kWorkers):
                     worker_cfgs[i].cmd = "bcast_xk_uk_1"
                     worker_cfgs[i].input_for_cmd = xk_for_device[worker_cfgs[i].device]
@@ -396,19 +395,128 @@ def main(algo_name=AlgoNames.VR_MARINA,
             # Collect statistics
             # ====================================================================
             if iteration % log_every == 0:
-                loss, grad_norm = getLossAndGradNorm(worker_cfgs[0].model, train_set_full, nn_config.batch_size,
+                loss, grad_norm = getLossAndGradNorm(worker_cfgs[0].model, train_set_full, nn_config.technical_batch_size,
                                                      worker_cfgs[0].device)
                 train_loss[iteration] = loss
                 fn_train_loss_grad_norm[iteration] = grad_norm
 
-                loss, grad_norm = getLossAndGradNorm(worker_cfgs[0].model, test_set, nn_config.batch_size,
+                loss, grad_norm = getLossAndGradNorm(worker_cfgs[0].model, test_set, nn_config.technical_batch_size,
                                                      worker_cfgs[0].device)
                 test_loss[iteration] = loss
                 fn_test_loss_grad_norm[iteration] = grad_norm
 
-                train_acc[iteration] = getAccuracy(worker_cfgs[0].model, train_set_full, nn_config.batch_size,
+                train_acc[iteration] = getAccuracy(worker_cfgs[0].model, train_set_full, nn_config.technical_batch_size,
                                                    worker_cfgs[0].device)
-                test_acc[iteration] = getAccuracy(worker_cfgs[0].model, test_set, nn_config.batch_size,
+                test_acc[iteration] = getAccuracy(worker_cfgs[0].model, test_set, nn_config.technical_batch_size,
+                                                  worker_cfgs[0].device)
+                print(
+                    f"  train accuracy: {train_acc[iteration]}, test accuracy: {test_acc[iteration]}, train loss: {train_loss[iteration]}, test loss: {test_loss[iteration]}")
+                print(
+                    f"  grad norm train: {fn_train_loss_grad_norm[iteration]}, test: {fn_test_loss_grad_norm[iteration]}")
+                print(f"  used step-size: {nn_config.gamma}")
+
+            else:
+                train_loss[iteration] = train_loss[iteration - 1]
+                fn_train_loss_grad_norm[iteration] = fn_train_loss_grad_norm[iteration - 1]
+                test_loss[iteration] = test_loss[iteration - 1]
+                fn_test_loss_grad_norm[iteration] = fn_test_loss_grad_norm[iteration - 1]
+                train_acc[iteration] = train_acc[iteration - 1]
+                test_acc[iteration] = test_acc[iteration - 1]
+            # ====================================================================
+
+            # Draw testp Bernoulli random variable (which is equal 1 w.p. p)
+            ck = 0
+            testp = random.random()
+            if testp < nn_config.p:
+                ck = 1
+            else:
+                ck = 0
+
+            # Broadcast gk wti command to workers
+            gk_for_device = {}
+            for d_id in range(len(available_devices)):
+                gk_loc = []
+                for gk_i in gk:
+                    gk_loc.append(gk_i.to(available_devices[d_id]))
+                gk_for_device[available_devices[d_id]] = gk_loc
+
+            if ck == 1:
+                for i in range(kWorkers):
+                    worker_cfgs[i].cmd = "bcast_g_c1"
+                    worker_cfgs[i].input_for_cmd = gk_for_device[worker_cfgs[i].device]
+                    worker_cfgs[i].input_cmd_ready.release()
+
+            if ck == 0:
+                for i in range(kWorkers):
+                    worker_cfgs[i].cmd = "bcast_g_c0"
+                    worker_cfgs[i].input_for_cmd = gk_for_device[worker_cfgs[i].device]
+                    worker_cfgs[i].input_cmd_ready.release()
+
+            time_before = time()
+            # rootprint(print_lock, f'Time spent BEFORE waiting for workers: {time_before - prev_time}')
+            # Obtain workers gi and average result
+            for i in range(kWorkers):
+                worker_cfgs[i].cmd_output_ready.acquire()
+            time_after = time()
+            rootprint(print_lock, f'Time spent waiting for workers: {time_after - time_before}')
+
+            gk_next = worker_cfgs[0].output_of_cmd
+            worker_cfgs[0].output_of_cmd = None
+            for i in range(1, kWorkers):
+                for j in range(len(worker_cfgs[i].output_of_cmd)):
+                    gk_next[j] = gk_next[j] + worker_cfgs[i].output_of_cmd[j].to(master_device)
+                worker_cfgs[i].output_of_cmd = None
+            gk_next = mult_param(1.0 / kWorkers, gk_next)
+            print('Norm of change: ', norm_of_param(sub_params(gk, gk_next)))
+            gk = gk_next
+
+            # rootprint(print_lock, f'Time spent AFTER waiting for workers: {time() - time_after}')
+
+    elif algo_name == AlgoNames.KATYUSHA:
+        # Evaluate g0
+        for i in range(kWorkers):
+            worker_cfgs[i].cmd = "full_grad"
+            worker_cfgs[i].input_cmd_ready.release()
+
+        for i in range(kWorkers):
+            worker_cfgs[i].cmd_output_ready.acquire()
+
+        g0 = worker_cfgs[0].output_of_cmd
+        worker_cfgs[0].output_of_cmd = None
+        for i in range(1, kWorkers):
+            for j in range(len(worker_cfgs[i].output_of_cmd)):
+                g0[j] = g0[j] + worker_cfgs[i].output_of_cmd[j].to(master_device)
+            worker_cfgs[i].output_of_cmd = None
+        g0 = mult_param(1.0 / kWorkers, g0)
+        gk = g0
+
+        rootprint(print_lock, f"Start {nn_config.KMax} iterations of algorithm")
+
+        prev_time = time()
+        for iteration in range(0, nn_config.KMax):
+            # if k % 2 == 0:
+            rootprint(print_lock, f"Iteration {iteration}/{nn_config.KMax}. Completed by ",
+                      iteration / nn_config.KMax * 100.0, "%",
+                      f'elapsed {time() - prev_time} s')
+            prev_time = time()
+            # ====================================================================
+            # Collect statistics
+            # ====================================================================
+            if iteration % log_every == 0:
+                loss, grad_norm = getLossAndGradNorm(worker_cfgs[0].model, train_set_full,
+                                                     nn_config.technical_batch_size,
+                                                     worker_cfgs[0].device)
+                train_loss[iteration] = loss
+                fn_train_loss_grad_norm[iteration] = grad_norm
+
+                loss, grad_norm = getLossAndGradNorm(worker_cfgs[0].model, test_set, nn_config.technical_batch_size,
+                                                     worker_cfgs[0].device)
+                test_loss[iteration] = loss
+                fn_test_loss_grad_norm[iteration] = grad_norm
+
+                train_acc[iteration] = getAccuracy(worker_cfgs[0].model, train_set_full, nn_config.technical_batch_size,
+                                                   worker_cfgs[0].device)
+                test_acc[iteration] = getAccuracy(worker_cfgs[0].model, test_set, nn_config.technical_batch_size,
                                                   worker_cfgs[0].device)
                 print(
                     f"  train accuracy: {train_acc[iteration]}, test accuracy: {test_acc[iteration]}, train loss: {train_loss[iteration]}, test loss: {test_loss[iteration]}")
@@ -530,7 +638,7 @@ if __name__ == "__main__":
     DEBUG = False
     device_num = 0
 
-    n_iter = 30
+    n_iter = 500
     log_every = 10
 
     alg_names = []
@@ -560,18 +668,18 @@ if __name__ == "__main__":
     gamma +=  [0.15, 0.35, 0.35, 2.5]
     ps += [None] * 4
 
-    # alg_names += [AlgoNames.VR_MARINA] * 5
-    # n_iters += [n_iter] * 5
-    # Ks += [100_000, 500_000, 1_000_000, None, None]
-    # no_comprs += [False, False, False, True, True]
-    # batch_size_for_worker += [256 * 1] * 5
-    # technical_batch_size += [256 * 16] * 5
-    # gamma += [0.95] * 3 + [3.5] * 2
-    # ps += [None] * 4 + [0.008554677047253982]
+    alg_names += [AlgoNames.VR_MARINA] * 5
+    n_iters += [n_iter] * 5
+    Ks += [100_000, 500_000, 1_000_000, None, None]
+    no_comprs += [False, False, False, True, True]
+    batch_size_for_worker += [256 * 1] * 5
+    technical_batch_size += [256 * 16] * 5
+    gamma += [0.95] * 3 + [3.5] * 2
+    ps += [None] * 4 + [0.008554677047253982]
 
     iter_id = 0
-    # do_iters = list(range(len(n_iters)))
-    do_iters = [0]
+    do_iters = list(range(len(n_iters)))
+    # do_iters = [4]
     for conf in zip(alg_names, n_iters, Ks, no_comprs, batch_size_for_worker, technical_batch_size, gamma, ps):
         a, n, K, nc, bw, tb, g, p = conf
         if iter_id in do_iters:
